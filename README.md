@@ -81,8 +81,11 @@ webtime.py --- the acquisition program.
 
 webtime.sql --- another schema.
 
+Added:
 
+createtimeseries.py --- fetches hosts from sql table and plots offsets for each host.
 
+graphgen.py --- generates synthetic plots and extracts features.
 
 ## Related Work
 

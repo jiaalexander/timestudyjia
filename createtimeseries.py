@@ -1,6 +1,7 @@
 import pymysql
 import re
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdt
 from datetime import datetime, timedelta
 
 def mysqlConnect():
@@ -45,7 +46,11 @@ def createTimeseries(conn):
             if re.search('[a-zA-Z]', line) != None:
                 if len(times) > 0:
                     num_hosts += 1
+                    plt.clf()
+                    plt.gca().xaxis.set_major_formatter(mdt.DateFormatter('%m/%d/%Y'))
+                    plt.gca().xaxis.set_major_locator(mdt.DayLocator())
                     plt.plot(times, offsets)
+                    plt.gcf().autofmt_xdate()
                     plt.savefig("/home/anj1/timestudy/plots/"+hostname.replace(".","-")+".png")
                 else:
                     num_empty_hosts += 1
@@ -56,7 +61,7 @@ def createTimeseries(conn):
                 row = line.split(',')
                 time = datetime.strptime(row[0],"%Y-%m-%d %H:%M:%S")
                 epochseconds = int((time-epoch).total_seconds())
-                times.append(epochseconds)
+                times.append(time)
                 offsets.append(int(row[2]))
         print ("hosts with no times entry: " + str(num_empty_hosts))
         print ("Images created: " + str(num_hosts))
