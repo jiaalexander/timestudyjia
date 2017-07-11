@@ -1,0 +1,110 @@
+Total number of hosts examined: 4827  (2838 IP addresses)
+Dates of study: 2017-06-23 to 2017-06-26
+Number of time measurements: 480455
+Number of hosts with at least one incorrect time measurement: 1141 (23.64%)
+Number of IP addresses with at least one incorrect time measurement: 912 (32.14%)
+Hosts where clocks are off 1 to 59 seconds: 349
+
+
+Representative hosts:
+Host                                        Total      Wrong        Max Offset
+2009-2017.pepfar.gov                           40          1 (  2%)  00:00:01  
+   23.196.72.45                                 2          0         00:00:00  
+   23.6.77.175                                 38          1         00:00:01  
+
+2016.trade.gov                                 49         14 ( 29%)  00:00:01  
+   52.4.15.10                                  49         14         00:00:01  
+
+6mlmc.amedd.army.mil                           63         63 (100%)  00:00:32  
+   143.84.107.245                              63         63         00:00:32  
+
+academy.grc.nasa.gov                           56          8 ( 14%)  00:00:49  
+   128.156.253.24                              56          8         00:00:49  
+
+acast.grc.nasa.gov                             39          5 ( 13%)  00:00:50  
+   128.156.253.24                              39          5         00:00:50  
+
+access.co-ops.nos.noaa.gov                     63         63 (100%)  00:00:03  
+   140.90.121.82                               63         63         00:00:03  
+
+acetool.commerce.gov                           63         63 (100%)  00:00:30  
+   170.110.225.194                             63         63         00:00:30  
+
+admin.coastalscience.noaa.gov                  63         19 ( 30%)  00:00:01  
+   104.46.101.59                               63         19         00:00:01  
+
+admin.eca.dev.state.gov                        63         63 (100%)  00:00:16  
+   192.255.49.69                               63         63         00:00:16  
+
+aero-academy.grc.nasa.gov                      51          5 ( 10%)  00:00:50  
+   128.156.253.24                              51          5         00:00:50  
+
+
+
+
+Hosts where clocks are off 1 minute to 1 hour: 38
+
+
+Representative hosts:
+Host                                        Total      Wrong        Max Offset
+assignment.uspto.gov                          126        126 (100%)  00:12:20  
+   34.197.183.226                              63         63         00:12:20  
+   54.209.127.82                               63         63         00:12:20  
+
+badgeofbravery.ncjrs.gov                       52         21 ( 40%)  00:03:33  
+   149.101.166.19                              52         21         00:03:33  
+
+bja.gov                                        61         29 ( 48%)  00:03:34  
+   149.101.166.15                              61         29         00:03:34  
+
+eda.gov                                        63         63 (100%)  00:01:06  
+   170.110.225.33                              63         63         00:01:06  
+
+faaps.commerce.gov                             64         64 (100%)  00:01:06  
+   170.110.225.180                             64         64         00:01:06  
+
+gulfspillrestoration.noaa.gov                  63         63 (100%)  00:06:21  
+   140.90.200.116                              63         63         00:06:21  
+
+idea-b.ed.gov                                  63         63 (100%)  00:03:35  
+   52.5.77.155                                 63         63         00:03:35  
+
+idea.ed.gov                                    63         63 (100%)  00:03:35  
+   52.5.77.155                                 63         63         00:03:35  
+
+library.noaa.gov                               60         60 (100%)  00:04:23  
+   140.90.71.164                               60         60         00:04:23  
+
+mrmc-npi.amedd.army.mil                        63         63 (100%)  00:01:10  
+   143.84.107.201                              63         63         00:01:10  
+
+
+
+
+Hosts where clocks are off 1 hour to 1 day: 2
+
+
+Host                                        Total      Wrong        Max Offset
+in.gov                                         63         63 (100%)  07:39:58  
+   208.40.244.65                               63         63         07:39:58  
+
+mojavedata.gov                                 63         63 (100%)  01:06:47  
+   216.117.188.217                             63         63         01:06:47  
+
+
+
+
+Hosts where clocks are off 1 day to 1 month: 0
+
+
+Host                                        Total      Wrong        Max Offset
+
+
+
+Hosts where clocks are off more than a month: 0
+
+
+Host                                        Total      Wrong        Max Offset
+
+
+

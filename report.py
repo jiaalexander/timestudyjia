@@ -6,7 +6,7 @@ import os
 import csv
 import time,datetime,pytz
 import pymysql, pymysql.err
-import MySQLdb, _mysql_exceptions
+#import MySQLdb, _mysql_exceptions
 import subprocess
 import sys
 import math

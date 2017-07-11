@@ -1,5 +1,5 @@
 [mysql]
-user=[yourusername]
-host=[yourhostname]
-passwd=[userpassword]
-db=[yourdb]
+user=anj1
+host=db1.antd.nist.gov
+passwd=dbwr1te!
+db=time
