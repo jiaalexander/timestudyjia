@@ -12,13 +12,13 @@ import jenks2
 import numpy as np
 from sklearn.cluster import DBSCAN
 
-def genOffset(offset, dur):
+def gen_offset(offset, dur):
     return [offset for i in range(dur)]
 
-def genDrift(rate, dur):
+def gen_drift(rate, dur):
     return [i*rate for i in range(1, dur+1)]
 
-def genDriftWSync(frequency, rate, dur):
+def gen_driftwSync(frequency, rate, dur):
     ts = []
     curr = -rate
     for i in range(dur):
@@ -31,7 +31,7 @@ def genDriftWSync(frequency, rate, dur):
 
 # frequency is chance that the clock will jump
 # jumpmin and jumpmax are the two values it jumps between
-def genJumpy(frequency, jumpmin, jumpmax, dur):
+def gen_jumpy(frequency, jumpmin, jumpmax, dur):
     ts = []
     curr = random.choice([jumpmin, jumpmax])
     for i in range(dur):
@@ -43,7 +43,7 @@ def genJumpy(frequency, jumpmin, jumpmax, dur):
         ts.append(curr)
     return ts
         
-def genSpike(frequency, rate, jumpto, jumpdur, dur):
+def gen_spike(frequency, rate, jumpto, jumpdur, dur):
     ts = []
     curr = -rate
     jump = 0
@@ -58,7 +58,7 @@ def genSpike(frequency, rate, jumpto, jumpdur, dur):
         jump -= 1
     return ts
 
-def genRandJumps(frequency, minval, maxval, dur):
+def gen_rand_jumps(frequency, minval, maxval, dur):
     ts = []
     curr = random.uniform(minval, maxval)
     nochange = int(random.choice([(frequency*dur*0.5), (frequency*dur*1.5)]))
@@ -70,7 +70,7 @@ def genRandJumps(frequency, minval, maxval, dur):
         nochange -= 1
     return ts
 
-def genShared(ts1, ts2):
+def gen_shared(ts1, ts2):
     ts = []
     for i in range(len(ts1)):
         if random.random() < 0.5:
@@ -79,7 +79,7 @@ def genShared(ts1, ts2):
             ts.append(ts2[i])
     return ts  
 
-def madOutliers(ts, threshold):
+def mad_outliers(ts, threshold):
     med = ts[len(ts)//2]
     absdiff = [abs(t-med) for t in ts]
     meddiff = absdiff[len(absdiff)//2]
@@ -88,53 +88,26 @@ def madOutliers(ts, threshold):
     else:
         return [(t*0.6745)/meddiff > threshold for t in absdiff]
  
-def get_breaks(dataset, threshold):
+def get_breaks(ts_sorted, avg_trend, threshold):
     breaks = []
-    cumul_mean, count, total = dataset[0], 1, 0
-    for datapoint in dataset:
-        total += 1
-        if cumul_mean != 0 and abs(datapoint/cumul_mean) - 1 >= threshold:
-            #print((datapoint/cumul_mean) - 1)
-            breaks.append(count-1)
-            cumul_mean = datapoint
-            total = 0
+    trend_threshold = (1+threshold)*avg_trend
+    prev_os, class_min = ts_sorted[0], ts_sorted[0]
+    in_range = lambda x, y: 0 <= (x-y) <= trend_threshold if avg_trend > 0 else 0 >= (y-x) >= trend_threshold
+    for offset in ts_sorted:
+        if not in_range(offset, prev_os):
+            breaks.append((class_min, prev_os))
+            class_min = offset
+            prev_os = offset
         else:
-            cumul_mean += (datapoint-cumul_mean)/(total)
-        count += 1
-        
+            prev_os = offset
+            
     return breaks
-    
-def offsetClasses(ts_sorted, trend):
-    classes = []
-    threshold= 0.1
-    class_total, prev_os, class_min = 0, ts_sorted[0], ts_sorted[0]
-    if trend < 0:    
-        for offset in ts_sorted:
-            class_total += 1
-            if 0 > (offset-prev_os) > (1+threshold)*trend:
-                class_total += 1
-                prev_os = offset
-            else:
-                classes.append((class_min, prev_os))
-                class_min = offset
-                class_total = 0
-    else:
-        for offset in ts_sorted:
-            class_total += 1
-            if 0 < (offset-prev_os) < (1+threshold)*trend:
-                class_total += 1
-                prev_os = offset
-            else:
-                classes.append((class_min, prev_os))
-                class_min = offset
-                class_total = 0
-                
-    return classes
         
-def genChars(ts):
+def gen_chars(ts):
     zeroes = ts.count(0)
     ts_sorted = sorted(ts)
-    slopes = [ts_sorted[i+1] - ts_sorted[i] for i in range(len(ts_sorted)-1)]
+    slopes = [ts[i+1] - ts[i] for i in range(len(ts)-1)]
+    slopes_sorted = sorted(slopes)
     prev_slope = slopes[0]
     slope_changes = 0
     for s in slopes:
@@ -143,23 +116,28 @@ def genChars(ts):
         prev_slope = s
         
     trendpoints, trendsum = 0, 0
-    is_outlier = madOutliers(slopes, 3)
+    is_outlier = mad_outliers(slopes_sorted, 3)
+#    print (slopes_sorted)
+#    print (is_outlier)
     for i in range(len(is_outlier)):
         if not is_outlier[i]:
             trendpoints += 1
-            trendsum += slopes[i]
+            trendsum += slopes_sorted[i]
             
-    print (len(is_outlier))
-    print (trendpoints)
-    avg_trend_len = len(ts)//(len(is_outlier)-trendpoints)
-    trend_direction = 0 if trendsum == 0 else trendsum/abs(trendsum)
+#    print (len(is_outlier))
+#    print (trendpoints)
+    if trendpoints == len(slopes_sorted):
+        avg_trend_len = len(ts)
+    else:
+        avg_trend_len = len(ts)//(len(is_outlier)-trendpoints)
+    #trend_direction = 0 if trendsum == 0 else trendsum/abs(trendsum)
     avg_trend = trendsum/trendpoints
-    offsets = offsetClasses(ts_sorted, avg_trend)
-    print (avg_trend)
-    return (zeroes, len(offsets), avg_trend_len, trend_direction)
+#    offsets = offsetClasses(ts_sorted, avg_trend)
+    offset_breaks = get_breaks(ts_sorted, avg_trend, 0.2)
+#    print (avg_trend)
+    return (zeroes/len(ts), len(offset_breaks)+1, avg_trend_len/len(ts), avg_trend != 0)
     
-def genChars_original(ts):
-    # FIGURE OUT WHERE TO REPLACE SORTED TS
+def gen_chars_original(ts):
     ts_sorted = sorted(ts)
     tsmin = ts_sorted[0]
     tsmax = ts_sorted[-1]
@@ -173,7 +151,6 @@ def genChars_original(ts):
     pointrates = []
     pointdiff = 0
     
-    # FIGURE OUT WHAT THE DEAL WITH THIS IS
     # median offset
     med = ts_sorted[total//2]
     # absolute offset diff from median
@@ -186,13 +163,12 @@ def genChars_original(ts):
         diff = abs(ts[i+1]-ts[i])
         # record all point differentials to search for anomalies
         pointrates.append(diff_scaled)
-        # IS THIS EVEN NECESSARY
         # sum up total point differentials
         pointdiff += abs(diff)
     pointrates.sort()
     # determine potential behavior classes; rategroups is a list that contains
     # indices (in the sorted array) of determined breaks 
-    isoutlier = madOutliers(pointrates, 3)
+    isoutlier = mad_outliers(pointrates, 3)
     trendpoints, trendsum = 0, 0
     for i in range(len(isoutlier)):
         if not isoutlier[i]:
@@ -213,67 +189,61 @@ def genChars_original(ts):
     return (trendrate, zeroes/total)
 
 if __name__ == "__main__":
-    rate = random.uniform(-1, 1)
-    ts = genDriftWSync(0.05, rate, 1000)
-    # CHECK IF IT'S PROPERLY DETERMINING OUTLIERS
-    print (genChars(ts))
-    plt.plot(ts)
-    plt.show()
-    
-    """
-    HOW THE CODE DEALS WITH RTT 
-    qduration = t1-t0
-    qdatetime = datetime.datetime.fromtimestamp(t0+qduration/2,pytz.utc)
-    """
+#    rate = random.uniform(-1, 1)
+#    ts = gen_jumpy(0.5, 0, 10, 100)
+#    print (gen_chars(ts))
+#    plt.plot(ts)
+#    plt.show()
 
-#    tslist = []
-#    num_samples = 200
-#    for i in range(num_samples):
-#        tslist.append(genOffset(random.choice([random.randrange(1, 15), random.randrange(-15, -1)]), 1000))
-#        tslist.append(genRandJumps(0.1, random.randrange(-15, 0), random.randrange(0, 15), 1000))
-#        tslist.append(genSpike(0.001, 0, random.choice([random.randrange(1, 15), random.randrange(-15, -1)]), 1, 1000))
-#        tslist.append(genJumpy(0.5, random.randrange(-15, -1), random.randrange(1, 15), 1000))
-#        tslist.append(genDrift(random.uniform(1, 1), 1000))
-#        tslist.append(genDriftWSync(0.01, random.uniform(-1, 1), 1000))
-#    chars = []
-#    starttime = time.time()
-#    for ts in tslist:
-#        chars.append(list(genCharacteristics(ts)))
-#    endtime = time.time() - starttime
-#    print ('Time to extract characteristics: ' + str(endtime))
-#    starttime = time.time()
-#    db = DBSCAN(eps=0.5, min_samples=10).fit(chars)
-#    endtime = time.time() - starttime
-#    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
-#    core_samples_mask[db.core_sample_indices_] = True
-#    labels = db.labels_
-#    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-#    print ('Clustering time: ' + str(endtime))
-#    print ('Estimated number of clusters: %d' % n_clusters_)
-#
-#    num_types = 6
-#    typenames = ["Offset", "Rand Jumps", "Spike", "Jumpy", "Drift", "Drift w/ Sync"]
-#    types = {}
-#    avgs = []
-#    for i in range(num_types):
-#        types[i] = []
-#        avgs.append(chars[num_types])
-#        
-#    i = 0
-#    for label in labels:
-#        types[i % num_types].append(label)
-#        i += 1
-#    i = 0
-#        
-#    for char in chars:
-#        avgs[i % num_types] = list(map(sum, zip(avgs[i % num_types], char)))
-#        i += 1
-#    for i in range(num_types):
-#        avgs[i] = [c/num_samples for c in avgs[i]]
-#        
-#    for i in range(num_types):
-#        print (typenames[i])
-#        print (types[i])
-#        
-#    for i in range(num_types):
-#        print (avgs[i])
+
+    tslist = []
+    num_samples = 200
+    for i in range(num_samples):
+        tslist.append(gen_offset(random.choice([random.randrange(1, 15), random.randrange(-15, -1)]), 1000))
+        tslist.append(gen_rand_jumps(0.1, random.randrange(-15, 0), random.randrange(0, 15), 1000))
+        tslist.append(gen_spike(0.001, 0, random.choice([random.randrange(1, 15), random.randrange(-15, -1)]), 1, 1000))
+        tslist.append(gen_jumpy(0.5, random.randrange(-15, -1), random.randrange(1, 15), 1000))
+        tslist.append(gen_drift(random.uniform(1, 1), 1000))
+        tslist.append(gen_driftwSync(0.01, random.uniform(-1, 1), 1000))
+    chars = []
+    starttime = time.time()
+    for ts in tslist:
+        chars.append(list(gen_chars(ts)))
+    endtime = time.time() - starttime
+    print ('Time to extract characteristics: ' + str(endtime))
+    starttime = time.time()
+    db = DBSCAN(eps=0.3, min_samples=10).fit(chars)
+    endtime = time.time() - starttime
+    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+    core_samples_mask[db.core_sample_indices_] = True
+    labels = db.labels_
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    print ('Clustering time: ' + str(endtime))
+    print ('Estimated number of clusters: %d' % n_clusters_)
+
+    num_types = 6
+    typenames = ["Offset", "Rand Jumps", "Spike", "Jumpy", "Drift", "Drift w/ Sync"]
+    types = {}
+    avgs = []
+    for i in range(num_types):
+        types[i] = []
+        avgs.append(chars[num_types])
+        
+    i = 0
+    for label in labels:
+        types[i % num_types].append(label)
+        i += 1
+    i = 0
+        
+    for char in chars:
+        avgs[i % num_types] = list(map(sum, zip(avgs[i % num_types], char)))
+        i += 1
+    for i in range(num_types):
+        avgs[i] = [c/num_samples for c in avgs[i]]
+        
+    for i in range(num_types):
+        print (typenames[i])
+        print (types[i])
+        
+    for i in range(num_types):
+        print (avgs[i])
