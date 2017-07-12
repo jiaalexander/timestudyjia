@@ -1,10 +1,9 @@
-import pymysql
-import re
+import pymysql, re, sys, operator
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdt
 from datetime import datetime, timedelta
 
-def mysqlConnect():
+def mysql_connect():
     mc = {"host":"db1.antd.nist.gov",
           "user":"anj1",
           "passwd":"dbwr1te!",
@@ -17,7 +16,7 @@ def mysqlConnect():
     conn.cursor().execute("set time_zone = '+00:00'")
     return conn
 
-def createTimeseries(conn):
+def create_timeseries(conn, savefolder):
     c = conn.cursor()
     cmd = "select host from hosts where usg=1"
     c.execute(cmd)
@@ -37,35 +36,36 @@ def createTimeseries(conn):
     with open("timeseries.txt", 'r') as infile:
         epoch = datetime.utcfromtimestamp(0)
         hostname = ""
-        times = []
-        offsets = []
+        points = []
         num_hosts = 0
         num_empty_hosts = 0
         for line in infile:
             line = line.strip()
             if re.search('[a-zA-Z]', line) != None:
-                if len(times) > 0:
+                if len(points) > 0:
                     num_hosts += 1
+                    epochtimes, times, offsets = zip(*sorted(points, key=operator.itemgetter(0)))
                     plt.clf()
                     plt.gca().xaxis.set_major_formatter(mdt.DateFormatter('%m/%d/%Y'))
                     plt.gca().xaxis.set_major_locator(mdt.DayLocator())
                     plt.plot(times, offsets)
                     plt.gcf().autofmt_xdate()
-                    plt.savefig("/home/anj1/timestudy/plots/"+hostname.replace(".","-")+".png")
+                    plt.savefig(savefolder+hostname.replace(".","-")+".png")
                 else:
                     num_empty_hosts += 1
                 hostname = line
-                times = []
-                offsets = []
+                points = []
             else:
                 row = line.split(',')
                 time = datetime.strptime(row[0],"%Y-%m-%d %H:%M:%S")
                 epochseconds = int((time-epoch).total_seconds())
-                times.append(time)
-                offsets.append(int(row[2]))
+                points.append((epochseconds, time, int(row[2])))
         print ("hosts with no times entry: " + str(num_empty_hosts))
         print ("Images created: " + str(num_hosts))
 
 if __name__ == "__main__":
-    conn = mysqlConnect()
-    createTimeseries(conn)
+    conn = mysql_connect()
+    if len(sys.argv) < 2:
+        create_timeseries(conn, "/var/www/html/time-data/plots/")
+    else:
+        create_timeseries(conn, sys.argv[1])
