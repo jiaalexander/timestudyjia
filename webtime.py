@@ -37,7 +37,7 @@ def get_config(args):
     config = configparser.ConfigParser()
     config["mysql"] = {"host":"db1.antd.nist.gov",
                        "user":"anj1",
-                       "passwd":"dbwr1te!",
+                       "passwd":"",
                        "port":0,
                        "db":"time",
                        "mysqldump":"mysqldump" }
